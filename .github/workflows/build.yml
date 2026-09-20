@@ -8,22 +8,43 @@ on:
 
 jobs:
   build:
+    name: Build ARMv7 lib.so
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
       - name: Install Android NDK
         run: |
-          sdkmanager --install "ndk;27.3.13750724"
+          sdkmanager "platform-tools"
+          sdkmanager "platforms;android-27"
+          sdkmanager "build-tools;34.0.0"
+          sdkmanager "ndk;25.2.9519653"
 
-      - name: Build ARMv7 library
+      - name: Set NDK environment
         run: |
-          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/25.2.9519653" >> $GITHUB_ENV
+          echo "$ANDROID_SDK_ROOT/ndk/25.2.9519653" >> $GITHUB_PATH
+
+      - name: Show project files
+        run: |
+          echo "=== PROJECT ==="
+          find . -maxdepth 3 -type f | sort
+
+      - name: Build ARMv7
+        run: |
+          echo "=== BUILD ARMv7 ==="
+
           "$ANDROID_NDK_HOME/ndk-build" \
             NDK_PROJECT_PATH=. \
             APP_BUILD_SCRIPT=app/Android.mk \
@@ -33,18 +54,26 @@ jobs:
       - name: Show build output
         run: |
           echo "=== BUILD OUTPUT ==="
-          find . -type f \( -name "*.so" -o -name "*.a" \) -print
+          find . -type f -name "*.so" -print
+
+          echo "=== ARMv7 LIBRARY ==="
+          ls -lh libs/armeabi-v7a/ || true
 
       - name: Upload ARMv7 library
         uses: actions/upload-artifact@v4
         with:
           name: Button-Key-Floating-armeabi-v7a
-          path: libs/armeabi-v7a/*.so
-          "$NDK/ndk-build" --version
+          path: |
+            libs/armeabi-v7a/*.so
 
-          echo "armeabi-v7a compiler:"
-          "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" \
-            --target=armv7a-linux-androideabi21 \
-            --version
-
-          echo "ANDROID NDK TEST PASSED"
+      - name: Build information
+        run: |
+          echo "================================="
+          echo "BUTTON KEY FLOATING BUILD PASSED"
+          echo "================================="
+          echo "ABI: armeabi-v7a"
+          echo "Android API: 27"
+          echo "NDK: 25.2.9519653"
+          echo ""
+          echo "Generated library:"
+          find libs/armeabi-v7a -type f -name "*.so" -exec ls -lh {} \;
