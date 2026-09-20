@@ -7,16 +7,39 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-runner:
+  android-ndk-test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
-      - name: Test runner
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: ""
+
+      - name: Install Android NDK
         run: |
-          echo "Button Key Floating"
-          echo "GitHub Actions runner berhasil."
-          echo "Architecture:"
-          uname -m
+          sdkmanager --install "ndk;27.3.13750724"
+
+      - name: Verify Android NDK
+        run: |
+          NDK="$ANDROID_SDK_ROOT/ndk/27.3.13750724"
+
+          echo "Android SDK:"
+          echo "$ANDROID_SDK_ROOT"
+
+          echo "Android NDK:"
+          echo "$NDK"
+
+          test -d "$NDK"
+
+          "$NDK/ndk-build" --version
+
+          echo "armeabi-v7a compiler:"
+          "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" \
+            --target=armv7a-linux-androideabi21 \
+            --version
+
+          echo "ANDROID NDK TEST PASSED"
