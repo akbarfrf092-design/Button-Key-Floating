@@ -1,0 +1,22 @@
+name: Button Key Floating Build
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test-runner:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Test runner
+        run: |
+          echo "Button Key Floating"
+          echo "GitHub Actions runner berhasil."
+          echo "Architecture:"
+          uname -m
